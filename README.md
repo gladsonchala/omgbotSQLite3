@@ -5,7 +5,7 @@ OMGBOT Python AI chatting telegram bot
 ## To build
 
 ```docker
-docker build -t silver-spoon-api .
+docker build -t omg-bot .
 ```
 
 

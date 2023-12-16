@@ -2,7 +2,7 @@ from telegram import ChatAction, Update
 from telegram.ext import CallbackContext
 
 from app.searcher import google_search, send_request, send_request_with_search
-from app.utils import get_search_state, latest_key, logger, db, get_user_info
+from app.utils import get_search_state, latest_key, logger, get_user_info, store_message
 from strings import default_provider, helpmsg, admin_id, admin_ids, user_provider_preferences
 from WebScrape import WebScraper
 

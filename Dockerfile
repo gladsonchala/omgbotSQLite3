@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 81
 
 # Run app.py when the container launches
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:81", "main:app"]
+CMD ["python3", "main.py"]

@@ -7,14 +7,14 @@ import requests.exceptions
 from googlesearch import search
 from telegram import ChatAction
 
-from app.utils import get_search_state, get_user_info, get_user_previous_messages, get_user_provider_name, set_search_state, store_message, get_db_connection, create_cursor
+from app.utils import get_search_state, get_user_info, get_user_previous_messages, get_user_provider_name, set_search_state, store_message
 from strings import default_provider, endpoint_url, instruction, prompt, results, sleep_interval
 
 logger = logging.getLogger(__name__)
 
 # SQLite connection and cursor initialization
-conn = get_db_connection()
-cursor = create_cursor(conn)
+conn = sqlite3.connect('chat_data.db')
+cursor = conn.cursor()
 
 # -----------------------------------------
 def google_search(query):

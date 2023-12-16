@@ -1,7 +1,7 @@
 import random
 
 
-provider_names = ["GeekGpt", "ChatgptAi", "DeepInfra", "HuggingChat"]
+provider_names = ["GeekGpt", "ChatgptAi", "HuggingChat"]
 selected_provider = random.choice(provider_names)
 default_provider = selected_provider
 

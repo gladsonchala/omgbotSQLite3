@@ -1,70 +1,76 @@
 import json
 import logging
 import time
-
+import sqlite3
 import requests
 import requests.exceptions
 from googlesearch import search
 from telegram import ChatAction
 
-from app.utils import get_search_state, get_user_info, get_user_previous_messages, get_user_provider_name, db, set_search_state, store_message
+from app.utils import get_search_state, get_user_info, get_user_previous_messages, get_user_provider_name, set_search_state, store_message
 from strings import default_provider, endpoint_url, instruction, prompt, results, sleep_interval
 
 logger = logging.getLogger(__name__)
 
+# SQLite connection and cursor initialization
+conn = sqlite3.connect('chat_data.db')
+cursor = conn.cursor()
 
 # -----------------------------------------
 def google_search(query):
-  return search(query,
-                sleep_interval=sleep_interval,
-                num_results=results,
-                advanced=True)
-
+    return search(query,
+                  sleep_interval=sleep_interval,
+                  num_results=results,
+                  advanced=True)
 
 def search_command_handler(update, context):
-  #user_id = update.message.from_user.id
-  user_id, user_name, username = get_user_info(update)
-  user_message = update.message.text
-  search_enabled = get_search_state(user_id)
+    user_id, user_name, username = get_user_info(update)
+    user_message = update.message.text
+    search_enabled = get_search_state(user_id)
 
-  if search_enabled:
-    # Extract the search query
-    search_query = user_message.strip()
+    if search_enabled:
+        # Extract the search query
+        search_query = user_message.strip()
 
-    if search_query:
-      # Perform Google search
-      context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
-      search_results = google_search(search_query)
+        if search_query:
+            # Perform Google search
+            context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
+            search_results = google_search(search_query)
 
-      # Send the search results to the AI request
-      ai_response = send_request_with_search(user_message, search_results,
-                                             user_id, context, update)
+            # Send the search results to the AI request
+            ai_response = send_request_with_search(user_message, search_results, user_id, context, update)
 
-      # Reply to the user with AI response
-      try:
-        update.message.reply_text(f"""{ai_response}""", parse_mode='Markdown')
-      except Exception:
-        update.message.reply_text(ai_response)
+            # Store the conversation in the database
+            store_message(user_id, user_message, ai_response)
+
+            # Reply to the user with AI response
+            try:
+                update.message.reply_text(f"{ai_response}", parse_mode='Markdown')
+            except Exception:
+                update.message.reply_text(ai_response)
+        else:
+            # If the search query is empty, inform the user
+            update.message.reply_text(
+                "Please provide a search query after /search.\n\nExample: ```example /search What's the weather in London now?```",
+                parse_mode='Markdown')
     else:
-      # If the search query is empty, inform the user
-      update.message.reply_text(
-          "Please provide a search query after /search.\n\nExample: ```example /search What's the weather in London now?```",
-          parse_mode='Markdown')
-  else:
-    if user_message.startswith("/search "):
-      search_query = user_message[len("/search "):].strip()
-      context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
-      search_results = google_search(search_query)
-      ai_response = send_request_with_search(user_message, search_results,
-                                             user_id, context, update)
-      try:
-        update.message.reply_text(f"""{ai_response}""", parse_mode='Markdown')
-      except:
-        update.message.reply_text(ai_response)
-    else:
-      update.message.reply_text("Please provide a search query after /search.\n\nExample: ```example /search What's the weather in London now?```",
-        parse_mode='Markdown')
+        if user_message.startswith("/search "):
+            search_query = user_message[len("/search "):].strip()
+            context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
+            search_results = google_search(search_query)
+            ai_response = send_request_with_search(user_message, search_results, user_id, context, update)
 
+            # Store the conversation in the database
+            store_message(user_id, user_message, ai_response)
+
+            try:
+                update.message.reply_text(f"{ai_response}", parse_mode='Markdown')
+            except:
+                update.message.reply_text(ai_response)
+        else:
+            update.message.reply_text(
+                "Please provide a search query after /search.\n\nExample: ```example /search What's the weather in London now?```",
+                parse_mode='Markdown')
 
 # Function to handle sending requests with logging and retry mechanism
 def send_request_with_retry(user_message, user_id, context, update, retries=3):

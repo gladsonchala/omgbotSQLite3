@@ -10,7 +10,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Connect to the SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect('your_database_name.db')
+conn = sqlite3.connect('chat_data.db')
 
 # Create a cursor object to execute SQL queries
 cursor = conn.cursor()

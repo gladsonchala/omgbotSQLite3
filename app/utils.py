@@ -1,6 +1,5 @@
 import logging
-import sqlite3  # Import the sqlite3 module
-
+import sqlite3  
 from strings import default_provider, user_provider_preferences
 
 # Set up logging
@@ -9,11 +8,15 @@ logging.basicConfig(
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Connect to the SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect('chat_data.db')
+def get_db_connection():
+    return sqlite3.connect('chat_data.db')
 
-# Create a cursor object to execute SQL queries
-cursor = conn.cursor()
+def create_cursor(connection):
+    return connection.cursor()
+
+
+conn = get_db_connection()
+cursor = create_cursor(conn)
 
 # Create the necessary table if it doesn't exist
 cursor.execute('''

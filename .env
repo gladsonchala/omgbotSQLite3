@@ -1,0 +1,2 @@
+FLASK_APP=main.py
+FLASK_RUN_HOST=0.0.0.0

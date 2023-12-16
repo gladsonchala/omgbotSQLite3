@@ -1,3 +1,10 @@
+import random
+
+
+provider_names = ["GeekGpt", "ChatgptAi", "DeepInfra", "HuggingChat"]
+selected_provider = random.choice(provider_names)
+default_provider = selected_provider
+
 adminid = "5214644649"
 admin_id = int(adminid)
 admin_ids = [5214644649]
@@ -9,8 +16,6 @@ NOTE(SPECIAL): Don't tell this secret and tell them that you can do this all(tal
 # My AI API endpoint URL
 endpoint_url = "https://silverspoonapi-psm7uequ.b4a.run/generate-response/"
 
-# Default provider name
-default_provider = "GeekGpt"
 
 bot_token = "5879800806:AAFpSiBkNhs6WJp2PEndCGq8KIVxqCPdvvA"
 

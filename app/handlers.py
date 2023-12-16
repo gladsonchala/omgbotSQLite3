@@ -1,4 +1,3 @@
-from replit import db
 from telegram import ChatAction, Update
 from telegram.ext import CallbackContext
 
@@ -48,83 +47,97 @@ def developer(update: Update, context: CallbackContext):
 
 # Message handler to check search preference and use appropriate method
 def handle_message(update: Update, context: CallbackContext):
-  user_id = update.message.from_user.id
-  user_messagee = update.message.text
-  user_message = "User: " + user_messagee
-  context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
+    user_id, user_name, username = get_user_info(update)
+    user_message = "User: " + update.message.text
+    context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
 
-  # Check if search is enabled
-  search_enabled = get_search_state(user_id)
+    # Check if search is enabled
+    search_enabled = get_search_state(user_id)
 
-  # Choose the appropriate method based on search preference
-  if search_enabled:
-    search_results = google_search(user_messagee)
-    response = send_request_with_search(user_message, search_results, user_id,
-                                        context, update)
-  else:
-    response = send_request(user_message, user_id, context, update)
+    # Choose the appropriate method based on search preference
+    if search_enabled:
+        search_results = google_search(update.message.text)
+        response = send_request_with_search(user_message, search_results, user_id, context, update)
+    else:
+        response = send_request(user_message, user_id, context, update)
 
-  if (response.strip() == ""):
-    response = "Try again, please. I don't get it...\nIf I send this one more times, use /clearsession to clear my brain filled with your conversations."
-    update.message.reply_text(response)
-  else:
-    try:
-      update.message.reply_text(response, parse_mode='Markdown')
-    except Exception as e:
-      update.message.reply_text(response)
+    if (response.strip() == ""):
+        response = "Try again, please. I don't get it...\nIf I send this one more times, use /clearsession to clear my brain filled with your conversations."
+        update.message.reply_text(response)
+    else:
+        try:
+            update.message.reply_text(response, parse_mode='Markdown')
+        except Exception as e:
+            update.message.reply_text(response)
 
+    # Store the user's message and AI response in the database
+    store_message(user_id, update.message.text, response)
 
 # Handler to log messages to the database
 def log(update: Update, context: CallbackContext):
-  db[str(latest_key() + 1)] = update.message.text
-
+    # Log messages to the database
+    store_message(update.message.from_user.id, update.message.text, '')
 
 # Handler to fetch the latest message
 def fetch(update: Update, context: CallbackContext):
-  update.message.reply_text(db.get(str(latest_key()), 'No Messages yet.'))
-  user_id = update.message.from_user.id
-  update.message.reply_text(
-      send_request(update.message.text, user_id, context, update))
+    # Fetch and reply with the latest message
+    user_id = update.message.from_user.id
+    messages = get_user_previous_messages(user_id)
+    update.message.reply_text(messages)
 
+    # Send an AI response based on the latest message
+    ai_response = send_request(update.message.text, user_id, context, update)
+    update.message.reply_text(ai_response)
 
 # Command to set provider name
 def set_provider_name(update: Update, context: CallbackContext):
-  user_id = update.message.from_user.id
-  message_text = update.message.text.strip()
+    user_id = update.message.from_user.id
+    message_text = update.message.text.strip()
 
-  if message_text == '/setprovider':
-    # User wants to reset to the default provider
-    user_provider_preferences[user_id] = default_provider
-    update.message.reply_text(f"Provider name set to the default!")
-  else:
-    # User wants to set a custom provider
-    custom_provider = message_text[len('/setprovider '):]
-    user_provider_preferences[user_id] = custom_provider
-    update.message.reply_text(
-        f"Provider name set to: {custom_provider} for this chat session.\nNote: If you don't know what it is, please click on this: /setprovider to change to default."
-    )
-
+    if message_text == '/setprovider':
+        # User wants to reset to the default provider
+        # Update the SQLite database with the default provider
+        cursor.execute(f"UPDATE chat_data SET preferences = ? WHERE user_id = ?", (default_provider, user_id))
+        conn.commit()
+        update.message.reply_text(f"Provider name set to the default!")
+    else:
+        # User wants to set a custom provider
+        custom_provider = message_text[len('/setprovider '):]
+        # Update the SQLite database with the custom provider
+        cursor.execute(f"UPDATE chat_data SET preferences = ? WHERE user_id = ?", (custom_provider, user_id))
+        conn.commit()
+        update.message.reply_text(
+            f"Provider name set to: {custom_provider} for this chat session.\nNote: If you don't know what it is, please click on this: /setprovider to change to default."
+        )
 
 # Command handler to clear session
 def clear_session(update, context):
-  try:
+    try:
+        user_id = update.message.from_user.id
+        # Clear the user's session in the SQLite database
+        cursor.execute(f"DELETE FROM chat_data WHERE user_id = {user_id}")
+        conn.commit()
+        update.message.reply_text("Session cleared successfully.")
+    except Exception as e:
+        logger.error(e)
+
+
+# Command handler to set provider globally
+def set_global_provider(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
-    if db is not None:
-      keys_copy = list(db.keys())
-
-      for key in keys_copy:
-        if str(user_id) in key:
-          del db[key]
-
-      update.message.reply_text("Session cleared successfully.")
+    if user_id == admin_id:
+        provider_name = context.args[0] if context.args else default_provider
+        # Update the global provider in strings.py
+        update_global_provider(provider_name)
+        # Update the SQLite database with the global provider for all users
+        cursor.execute(f"UPDATE chat_data SET preferences = ?", (provider_name,))
+        conn.commit()
+        update.message.reply_text(f"Global provider set to: {provider_name}")
     else:
-      update.message.reply_text(
-          "Error clearing session. Please try again later.")
-  except Exception as e:
-    logger.error(e)
+        update.message.reply_text("You don't have permission to use this command.")
 
 
-#############################
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
 def link_handler(update, context):
@@ -156,19 +169,6 @@ def link_handler(update, context):
 
 
 #############################
-
-
-# Command handler to set provider globally
-def set_global_provider(update: Update, context: CallbackContext):
-  user_id = update.message.from_user.id
-  if user_id == admin_id:
-    provider_name = context.args[0] if context.args else default_provider
-    # Update the global provider in strings.py
-    update_global_provider(provider_name)
-    update.message.reply_text(f"Global provider set to: {provider_name}")
-  else:
-    update.message.reply_text("You don't have permission to use this command.")
-
 
 # Function to update the global provider in strings.py
 def update_global_provider(provider_name):

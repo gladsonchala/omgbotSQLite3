@@ -9,8 +9,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-conn = get_db_connection()
-cursor = create_cursor(conn)
+# SQLite connection and cursor initialization
+conn = sqlite3.connect('chat_data.db')
+cursor = conn.cursor()
 
 # Create the necessary table if it doesn't exist
 cursor.execute('''
@@ -22,12 +23,6 @@ cursor.execute('''
         preferences TEXT
     )
 ''')
-
-def get_db_connection():
-    return sqlite3.connect('chat_data.db')
-
-def create_cursor(connection):
-    return connection.cursor()
 
 
 # Function to get user info

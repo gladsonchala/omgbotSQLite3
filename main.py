@@ -5,7 +5,6 @@ from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from app import handlers, searcher, utils
 from app.handlers import set_global_provider, set_global_preferences, add_admin_id, delete_admin_id, link_handler
-from app.utils import get_db_connection, create_cursor
 from strings import bot_token
 
 app = Flask(__name__)

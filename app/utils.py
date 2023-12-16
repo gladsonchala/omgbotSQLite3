@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Check if connection and cursor are already created, otherwise create new ones
 if 'conn' not in locals():
     conn = sqlite3.connect('chat_data.db')
-    cursor = conn.cursor()-
+    cursor = conn.cursor()
 
 # Create the necessary table if it doesn't exist
 cursor.execute('''

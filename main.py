@@ -1,4 +1,5 @@
 from flask import Flask
+from gevent.pywsgi import WSGIServer
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from app import handlers, searcher
@@ -27,10 +28,14 @@ def main():
     dispatcher.add_handler(CommandHandler("deleteadminid", delete_admin_id))
     dispatcher.add_handler(CommandHandler("link", link_handler))
 
-    # Note: Using Gunicorn for production deployment
-    # Example command to run the application with Gunicorn:
-    # gunicorn -w 4 -b 0.0.0.0:81 main:app
-    # Adjust the number of workers (-w) as needed based on your server's capabilities
+    updater.start_polling()
+
+    # Note: In production, consider using a production-ready web server like Gunicorn instead of the Flask development server
+    # Debug/Development
+    # app.run(debug=True, host="0.0.0.0", port="5000")
+    # Production
+    http_server = WSGIServer(('', 5000), app)
+    http_server.serve_forever()
 
 if __name__ == '__main__':
     main()

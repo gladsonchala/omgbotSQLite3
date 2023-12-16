@@ -1,18 +1,13 @@
 import logging
 import sqlite3  
 from strings import default_provider, user_provider_preferences
+from utils import get_db_connection, create_cursor
 
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-def get_db_connection():
-    return sqlite3.connect('chat_data.db')
-
-def create_cursor(connection):
-    return connection.cursor()
 
 
 conn = get_db_connection()
@@ -28,6 +23,13 @@ cursor.execute('''
         preferences TEXT
     )
 ''')
+
+def get_db_connection():
+    return sqlite3.connect('chat_data.db')
+
+def create_cursor(connection):
+    return connection.cursor()
+
 
 # Function to get user info
 def get_user_info(update):

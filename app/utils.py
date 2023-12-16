@@ -1,7 +1,6 @@
 import logging
 import sqlite3  
 from strings import default_provider, user_provider_preferences
-from utils import get_db_connection, create_cursor
 
 # Set up logging
 logging.basicConfig(

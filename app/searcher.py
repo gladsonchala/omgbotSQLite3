@@ -12,9 +12,10 @@ from strings import default_provider, endpoint_url, instruction, prompt, results
 
 logger = logging.getLogger(__name__)
 
-# SQLite connection and cursor initialization
-conn = sqlite3.connect('chat_data.db')
-cursor = conn.cursor()
+# Check if connection and cursor are already created, otherwise create new ones
+if 'conn' not in locals():
+    conn = sqlite3.connect('chat_data.db')
+    cursor = conn.cursor()
 
 # -----------------------------------------
 def google_search(query):

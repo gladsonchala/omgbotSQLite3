@@ -27,10 +27,10 @@ def main():
     dispatcher.add_handler(CommandHandler("deleteadminid", delete_admin_id))
     dispatcher.add_handler(CommandHandler("link", link_handler))
 
-    updater.start_polling()
-
-    # Note: In production, consider using a production-ready web server like Gunicorn instead of the Flask development server
-    app.run(host='0.0.0.0', port=81)
+    # Note: Using Gunicorn for production deployment
+    # Example command to run the application with Gunicorn:
+    # gunicorn -w 4 -b 0.0.0.0:81 main:app
+    # Adjust the number of workers (-w) as needed based on your server's capabilities
 
 if __name__ == '__main__':
     main()

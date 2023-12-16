@@ -4,3 +4,4 @@ urllib3==1.26.6
 googlesearch-python
 MarkupSafe==2.0.1
 bs4
+gunicorn
